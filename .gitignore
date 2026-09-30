@@ -5,3 +5,7 @@ backend/.env
 # Node dependencies
 frontend/node_modules/
 backend/node_modules/
+
+
+backend/cookies.txt
+backend/old-cookies.txt
