@@ -1,0 +1,60 @@
+.login { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); min-height: 100vh; background: var(--bg); }
+
+.login__brand {
+  position: relative; overflow: hidden; display: flex; align-items: center;
+  padding: 64px; color: #e6fffb;
+  background: linear-gradient(135deg, #04222f 0%, #0a4a57 55%, #0d9488 130%);
+}
+.login__bg { position: absolute; inset: -40px; }
+.login__bg::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+}
+.orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; }
+.orb--1 { width: 420px; height: 420px; background: #14b8a6; top: -6%; left: -8%; }
+.orb--2 { width: 360px; height: 360px; background: #38bdf8; bottom: -10%; right: -6%; }
+.orb--3 { width: 260px; height: 260px; background: #6366f1; top: 40%; left: 40%; opacity: 0.35; }
+.particle { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #99f6e4; opacity: 0; }
+
+.ecg { position: absolute; left: 0; bottom: 8%; width: 100%; height: auto; }
+.ecg__line {
+  fill: none; stroke: #5eead4; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 6px rgb(94 234 212 / 0.8));
+}
+@media (prefers-reduced-motion: reduce) {
+  .ecg__line { stroke-dashoffset: 0; opacity: 0.5; }
+}
+
+.login__brandContent { position: relative; max-width: 460px; }
+.login__logo {
+  width: 52px; height: 52px; display: grid; place-items: center; margin-bottom: 24px;
+  border-radius: 14px; background: rgb(255 255 255 / 0.12); border: 1px solid rgb(255 255 255 / 0.2);
+}
+.login__brandContent h1 { font-size: 36px; margin-bottom: 12px; color: #fff; }
+.login__brandContent > p { font-size: 16px; opacity: 0.85; margin-bottom: 28px; }
+.login__features { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.login__features li { display: flex; align-items: center; gap: 12px; }
+.login__features svg { color: #5eead4; flex-shrink: 0; }
+
+.login__panel { display: flex; align-items: center; justify-content: center; padding: 32px; }
+.login-card {
+  width: 100%; max-width: 400px; padding: 32px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+}
+.login-card h2 { font-size: 22px; margin-bottom: 4px; }
+.login-card__sub { color: var(--text-muted); margin-bottom: 24px; }
+.login-card__note { margin-top: 20px; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+.demo { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border); }
+.demo__label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.demo__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+@media (max-width: 960px) {
+  .login { grid-template-columns: 1fr; }
+  .login__brand { display: none; }
+}
