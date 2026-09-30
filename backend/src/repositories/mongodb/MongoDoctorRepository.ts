@@ -1,4 +1,4 @@
-import { isValidObjectId } from "mongoose";
+import { isValidObjectId, Types } from "mongoose";
 import type { IDoctorRepository } from "../interfaces/IDoctorRepository";
 import { DoctorModel, type DoctorDocument } from "../../models/doctor.model";
 import type {
@@ -91,5 +91,11 @@ export class MongoDoctorRepository implements IDoctorRepository {
     ]);
     const sorted = (values: unknown[]): string[] => values.map(String).sort((a, b) => a.localeCompare(b));
     return { specialties: sorted(specialties), departments: sorted(departments) };
+  }
+
+  async findByUserId(userId: string): Promise<Doctor | null> {
+    if (!isValidObjectId(userId)) return null;
+    const doc = await DoctorModel.findOne({ userId: new Types.ObjectId(userId) });
+    return doc ? toDoctor(doc) : null;
   }
 }

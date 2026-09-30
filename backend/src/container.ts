@@ -7,9 +7,17 @@ import {createAuthenticate} from "./middleware/authenticate";
 import { MongoDoctorRepository } from "./repositories/mongodb/MongoDoctorRepository";
 import { DoctorService } from "./services/DoctorService";
 import { DoctorController } from "./controllers/DoctorController";
+import { MongoAppointmentRepository } from "./repositories/mongodb/MongoAppointmentRepository";
+import { AvailabilityService } from "./services/AvailabilityService";
+import { AppointmentService } from "./services/AppointmentService";
+import { AppointmentController } from "./controllers/AppointmentController";
+
 
 const userRepository = new MongoUserRepository();
 const refreshTokenRepository = new MongoRefreshTokenRepository();
+const appointmentRepository = new MongoAppointmentRepository();
+const availabilityService = new AvailabilityService(appointmentRepository);
+
 
 export const tokenService = new TokenService(); 
 const authService = new AuthService(userRepository, refreshTokenRepository, tokenService);
@@ -19,5 +27,10 @@ export const authController = new AuthController(authService);
 export const authenticate = createAuthenticate(tokenService);
 
 const doctorRepository = new MongoDoctorRepository();
-const doctorService = new DoctorService(doctorRepository);
+const doctorService = new DoctorService(doctorRepository, availabilityService);
 export const doctorController = new DoctorController(doctorService);
+
+const appointmentService = new AppointmentService(appointmentRepository,doctorRepository,userRepository,availabilityService)
+
+
+export const appointmentController = new AppointmentController(appointmentService)

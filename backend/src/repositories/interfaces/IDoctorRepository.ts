@@ -7,4 +7,5 @@ export interface IDoctorRepository {
   create(input: CreateDoctorInput): Promise<Doctor>;
   update(id: string, patch: UpdateDoctorInput): Promise<Doctor | null>;
   getFilterOptions(): Promise<DoctorFilterOptions>;
+  findByUserId(userId: string): Promise<Doctor | null>;
 }

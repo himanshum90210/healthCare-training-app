@@ -57,3 +57,7 @@ export interface AvailabilitySlot {
   start: string;
   end: string;
 }
+
+export interface BookableSlot extends AvailabilitySlot {
+  startsAt: string; // exact UTC instant, ISO 8601: what the client sends back when booking
+}

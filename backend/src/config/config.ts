@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import {z} from "zod";
-
+import { IANAZone } from "luxon";
 dotenv.config();
 
 const envSchema = z.object({
@@ -12,6 +12,7 @@ const envSchema = z.object({
     JWT_EXPIRES_IN: z.string().default("7d"),
     REFRESH_TOKEN_EXPIRES_IN: z.string().default("7d"),
     CORS_ORIGIN: z.string().default("http://localhost:5173"),
+    CLINIC_TIMEZONE: z.string().default("Asia/Kolkata").refine((tz) => IANAZone.isValidZone(tz), "Must be a valid IANA time zone, e.g. Asia"),
 });
 
 export type ENV = z.infer<typeof envSchema>;
@@ -27,6 +28,7 @@ export class Config {
     public readonly jwtExpiresIn: string;
     public readonly refreshTokenExpiresIn: string;
     public readonly corsOrigin: string;
+    public readonly clinicTimezone: string;
 
     private constructor () {
         const result = envSchema.safeParse(process.env);
@@ -46,6 +48,7 @@ export class Config {
         this.jwtExpiresIn = env.JWT_EXPIRES_IN;
         this.refreshTokenExpiresIn = env.REFRESH_TOKEN_EXPIRES_IN;
         this.corsOrigin = env.CORS_ORIGIN;
+        this.clinicTimezone = env.CLINIC_TIMEZONE;
     }
 
 

@@ -11,6 +11,7 @@ const demoUsers: Array<Omit<CreateUserInput, "passwordHash">> = [
   { email: "doctor@demo.test", firstName: "Dev", lastName: "Doctor", role: "DOCTOR" },
   { email: "reception@demo.test", firstName: "Riya", lastName: "Reception", role: "RECEPTIONIST" },
   { email: "patient@demo.test", firstName: "Pat", lastName: "Patient", role: "PATIENT" },
+  { email: "patient2@demo.test", firstName: "Sam", lastName: "Second", role: "PATIENT" },
 ];
 
 async function seed(): Promise<void> {

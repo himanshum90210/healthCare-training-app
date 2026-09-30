@@ -3,6 +3,9 @@ import http from "http";
 import { createApp } from "./app";
 import { Database } from "./config/database"
 import { Config } from "./config/config"
+import { AppointmentModel } from "./models/appointment.model";
+import { DoctorModel } from "./models/doctor.model";
+import { UserModel } from "./models/user.model";
 
 // const PORT =Number(process.env.PORT) || 5000;
 
@@ -12,7 +15,9 @@ async function bootstrap(): Promise<void> {
     const database = Database.getInstance();
 
     const app = createApp();
-    await database.connect()
+    await database.connect();
+
+    await Promise.all([UserModel.init(), DoctorModel.init(), AppointmentModel.init()]);
 
     const server = http.createServer(app);
 
@@ -20,9 +25,9 @@ async function bootstrap(): Promise<void> {
         console.log(`HealthCare training backend is listening on PORT ${config.port} (${config.nodeEnv})`)
     });
 
-    const shutDown = (signal: string): void=> {
+    const shutDown = (signal: string): void => {
         console.log(`${signal} received. shutting down...`);
-        server.close(async() => {
+        server.close(async () => {
             await database.disconnected();
             console.log("Http Server Cloesed");
             process.exit(0);

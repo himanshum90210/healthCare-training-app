@@ -22,11 +22,25 @@ function blocksForDay(blocks: ScheduleBlock[], day: number): string {
   return hours.length ? hours.join(", ") : "Not available";
 }
 
+// First upcoming date (within 14 days) on which the doctor works
+function nextWorkingDate(blocks: ScheduleBlock[]): string | null {
+  const workDays = new Set(blocks.map((b) => b.dayOfWeek));
+  for (let i = 0; i < 14; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    if (workDays.has(d.getDay())) return d.toLocaleDateString("sv-SE");
+  }
+  return null;
+}
+
 export default function DoctorDetailPage() {
   const { id } = useParams();
-  const [date, setDate] = useState(todayLocal);
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  // const [date, setDate] = useState(todayLocal);const [pickedDate, setPickedDate] = useState<string | null>(null);
   const doctor = useDoctor(id);
-  const availability = useAvailability(id, date);
+  // const availability = useAvailability(id, date);
+  const date = pickedDate ?? (doctor.data ? nextWorkingDate(doctor.data.weeklySchedule) : null) ?? todayLocal();
+  const availability = useAvailability(doctor.isSuccess ? id : undefined, date);
 
   if (doctor.isPending) return <Loader />;
 
@@ -103,7 +117,7 @@ export default function DoctorDetailPage() {
               type="date"
               className="select"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => setPickedDate(e.target.value)}
             />
           </div>
 

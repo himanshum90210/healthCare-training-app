@@ -6,11 +6,12 @@ import { Config } from "./config/config";
 import { Database } from "./config/database";
 import {errorHandler, notFoundHandler} from "./middleware/errorHandler";
 import { ConflictError, ForbiddenError } from "./errors";
-import { authController, authenticate } from "./container";
+import { appointmentController, authController, authenticate } from "./container";
 import { createAuthRouter } from "./routes/auth.routes";
 import {createAdminRouter} from "./routes/admin.routes";
 import {doctorController} from "./container";
 import { createDoctorRouter } from "./routes/doctor.routes";
+import { createAppointmentRouter } from "./routes/appointment.routes";
 
 
 
@@ -73,6 +74,7 @@ export function createApp(): Application {
     app.use("/api/admin", createAdminRouter(authenticate))
     app.use("/api/auth", createAuthRouter(authController, authenticate));
     app.use("/api/doctors", createDoctorRouter(doctorController, authenticate));
+    app.use("/api/appointments", createAppointmentRouter(appointmentController , authenticate))
     app.use(notFoundHandler);
     app.use(errorHandler)
 
