@@ -1,11 +1,11 @@
 import type { IDoctorRepository } from "../repositories/interfaces/IDoctorRepository";
 import { NotFoundError } from "../errors";
-import { dayOfWeekFromDate, generateSlots } from "../utils/slots";
+// import { dayOfWeekFromDate, generateSlots } from "../utils/slots";
 import type { AvailabilityService } from "./AvailabilityService";
 
 
 import type {
-  AvailabilitySlot,
+  // AvailabilitySlot,
   BookableSlot,
   CreateDoctorInput,
   Doctor,
