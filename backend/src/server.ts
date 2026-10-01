@@ -6,6 +6,7 @@ import { Config } from "./config/config"
 import { AppointmentModel } from "./models/appointment.model";
 import { DoctorModel } from "./models/doctor.model";
 import { UserModel } from "./models/user.model";
+import { AuditLogModel } from "./models/auditLog.model";
 
 // const PORT =Number(process.env.PORT) || 5000;
 
@@ -17,7 +18,7 @@ async function bootstrap(): Promise<void> {
     const app = createApp();
     await database.connect();
 
-    await Promise.all([UserModel.init(), DoctorModel.init(), AppointmentModel.init()]);
+    await Promise.all([UserModel.init(), DoctorModel.init(), AppointmentModel.init(), AuditLogModel.init()]);
 
     const server = http.createServer(app);
 

@@ -12,15 +12,23 @@ import {createAdminRouter} from "./routes/admin.routes";
 import {doctorController} from "./container";
 import { createDoctorRouter } from "./routes/doctor.routes";
 import { createAppointmentRouter } from "./routes/appointment.routes";
+import { requestContextMiddleware } from "./middleware/requestContext";
+import {auditController} from "./container";
+import { createAuditRouter } from "./routes/audit.routes";
 
 
 
 
 export function createApp(): Application {
+
     const app = express();
+
+    app.use(requestContextMiddleware);
+    
 
     app.use(helmet());
     const config = Config.getInstance();
+    app.use(cors({ origin: config.corsOrigin, credentials: true, exposedHeaders: ["X-Request-Id"] }));
     app.use(
         cors({
             origin: config.corsOrigin,
@@ -75,6 +83,7 @@ export function createApp(): Application {
     app.use("/api/auth", createAuthRouter(authController, authenticate));
     app.use("/api/doctors", createDoctorRouter(doctorController, authenticate));
     app.use("/api/appointments", createAppointmentRouter(appointmentController , authenticate))
+    app.use("/api/audit-logs", createAuditRouter(auditController, authenticate));
     app.use(notFoundHandler);
     app.use(errorHandler)
 

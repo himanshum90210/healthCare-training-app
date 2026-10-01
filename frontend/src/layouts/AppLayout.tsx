@@ -9,6 +9,7 @@ import { Button } from "../components/ui/Button";
 import { NAV_ITEMS } from "../config/navigation";
 import { useTheme } from "../hooks/useTheme";
 import { initials, roleLabel } from "../utils/format";
+import {Toaster} from "sonner";
 
 gsap.registerPlugin(useGSAP);
 
@@ -38,6 +39,8 @@ export default function AppLayout() {
   const items = NAV_ITEMS.filter((item) => !item.roles || (user && item.roles.includes(user.role)));
 
   return (
+    <>
+     <Toaster theme={theme} position="top-right" richColors closeButton />
     <div className="shell">
       <aside className={`sidebar${navOpen ? " is-open" : ""}`} aria-label="Primary">
         <div className="sidebar__brand">
@@ -112,5 +115,6 @@ export default function AppLayout() {
         </main>
       </div>
     </div>
+    </>
   );
 }

@@ -35,9 +35,23 @@ export interface DoctorFilterOptions {
   departments: string[];
 }
 
+// export interface Availability {
+//   doctorId: string;
+//   date: string;
+//   slotDurationMinutes: number;
+//   slots: { start: string; end: string }[];
+// }
+
+export interface BookableSlot {
+  start: string; // clinic-local "HH:mm", for display
+  end: string;
+  startsAt: string; // exact UTC instant, sent back when booking
+}
+
 export interface Availability {
   doctorId: string;
   date: string;
+  timezone: string;
   slotDurationMinutes: number;
-  slots: { start: string; end: string }[];
+  slots: BookableSlot[];
 }

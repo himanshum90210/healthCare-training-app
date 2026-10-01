@@ -6,6 +6,7 @@ import AuthLayout from "../layouts/AuthLayout";
 import AppLayout from "../layouts/AppLayout";
 import RequireAuth from "./RequireAuth";
 import RequireRole from "./RequireRole";
+import AuditLogPage from "../pages/AuditLogPage";
 
 const LoginPage = lazy(() => import("../pages/LoginPage"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
@@ -14,6 +15,8 @@ const ForbiddenPage = lazy(() => import("../pages/ForbiddenPage"));
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 const DoctorsPage = lazy(() => import("../pages/DoctorsPage"));
 const DoctorDetailPage = lazy(() => import("../pages/DoctorDetailPage"));
+const AppointmentsPage = lazy(() => import("../pages/AppointmentsPage"));
+
 
 
 export default function AppRoutes() {
@@ -31,8 +34,10 @@ export default function AppRoutes() {
               <Route path="/forbidden" element={<ForbiddenPage />} />
               <Route path="/doctors" element={<DoctorsPage />} />
               <Route path="/doctors/:id" element={<DoctorDetailPage />} />
+              <Route path="/appointments" element={<AppointmentsPage />} />
               <Route element={<RequireRole roles={["ADMIN"]} />}>
                 <Route path="/admin" element={<AdminPage />} />
+                 <Route path="/audit-log" element={<AuditLogPage />} />
               </Route>
             </Route>
           </Route>

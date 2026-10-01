@@ -12,6 +12,8 @@ import {
 import type { Doctor } from "../types/doctor";
 import type { Paginated } from "../types/pagination";
 import { toClinicDate } from "../utils/clinicTime";
+import { AuditService } from "./AuditService";
+import { AuditAction, AuditData } from "../types/audit";
 
 export interface BookAppointmentInput {
   doctorId: string;
@@ -29,8 +31,9 @@ export class AppointmentService {
     private readonly doctors: IDoctorRepository,
     private readonly users: IUserRepository,
     private readonly availability: AvailabilityService,
-    private readonly now: () => Date = () => new Date()
-  ) {}
+    private readonly audit: AuditService,
+    private readonly now: () => Date = () => new Date(),
+  ) { }
 
   // ---------- commands ----------
 
@@ -43,7 +46,7 @@ export class AppointmentService {
     const slot = this.requireSlot(doctor, input.startTime);
     await this.assertNoConflicts({ doctorId: doctor.id, patientId, slot });
 
-    return this.appointments.create({
+    const created = await this.appointments.create({
       doctorId: doctor.id,
       patientId,
       startTime: slot.startsAt,
@@ -51,6 +54,9 @@ export class AppointmentService {
       reason: input.reason ?? "",
       bookedById: actor.id,
     });
+    await this.log(actor, "APPOINTMENT_BOOKED", "Booked", created);
+    return created;
+
   }
 
   async reschedule(actor: Actor, id: string, newStart: Date): Promise<Appointment> {
@@ -72,8 +78,13 @@ export class AppointmentService {
       excludeId: appointment.id,
     });
 
+    // const updated = await this.appointments.reschedule(id, { startTime: slot.startsAt, endTime: slot.endsAt });
+    // if (!updated) throw INVALID_STATE("Appointment can no longer be rescheduled");
+    // return updated;
+
     const updated = await this.appointments.reschedule(id, { startTime: slot.startsAt, endTime: slot.endsAt });
     if (!updated) throw INVALID_STATE("Appointment can no longer be rescheduled");
+    await this.log(actor, "APPOINTMENT_RESCHEDULED", "Rescheduled", updated, this.snapshot(appointment));
     return updated;
   }
 
@@ -88,21 +99,28 @@ export class AppointmentService {
       reason: reason?.trim() || null,
       at: this.now(),
     });
+    // if (!cancelled) throw INVALID_STATE("Appointment can no longer be cancelled");
+    // return cancelled;
     if (!cancelled) throw INVALID_STATE("Appointment can no longer be cancelled");
+    await this.log(actor, "APPOINTMENT_CANCELLED", "Cancelled", cancelled, this.snapshot(appointment));
     return cancelled;
+
   }
 
   async confirm(actor: Actor, id: string): Promise<Appointment> {
-    await this.getAccessible(actor, id);
+    const before = await this.getAccessible(actor, id);
     const confirmed = await this.appointments.transition(id, ["SCHEDULED"], "CONFIRMED");
     if (!confirmed) throw INVALID_STATE("Only a scheduled appointment can be confirmed");
+    await this.log(actor, "APPOINTMENT_CONFIRMED", "Confirmed", confirmed, this.snapshot(before));
+
     return confirmed;
   }
 
   async complete(actor: Actor, id: string): Promise<Appointment> {
-    await this.getAccessible(actor, id);
+   const before =  await this.getAccessible(actor, id);
     const completed = await this.appointments.transition(id, ["CONFIRMED"], "COMPLETED");
     if (!completed) throw INVALID_STATE("Only a confirmed appointment can be completed");
+    await this.log(actor, "APPOINTMENT_COMPLETED", "Completed", completed, this.snapshot(before));
     return completed;
   }
 
@@ -143,6 +161,26 @@ export class AppointmentService {
     }
     return patient.id;
   }
+
+
+  private snapshot(a: Appointment): AuditData {
+    return { status: a.status, startTime: a.startTime.toISOString(), endTime: a.endTime.toISOString() };
+  }
+
+  private log(actor: Actor, action: AuditAction, verb: string, a: Appointment, before?: AuditData): Promise<void> {
+    return this.audit.record({
+      actor,
+      action,
+      entityType: "APPOINTMENT",
+      entityId: a.id,
+      summary: `${verb} appointment with Dr. ${a.doctor.firstName} ${a.doctor.lastName} for ${a.patient.firstName} ${a.patient.lastName}`,
+      before,
+      after: this.snapshot(a),
+      metadata: { doctorId: a.doctorId, patientId: a.patientId },
+    });
+  }
+
+
 
   /** The requested instant must be a real, future slot in the doctor's schedule */
   private requireSlot(doctor: Doctor, start: Date): SlotWindow {

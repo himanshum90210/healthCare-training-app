@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { ZodError } from "zod";
 import { Config } from "../config/config";
+import { getRequestContext } from "../utils/requestContext";
 import { AppError, BadRequestError, ConflictError, NotFoundError, ValidationError } from "../errors"
 
 export function notFoundHandler(req: Request, _res: Response, next: NextFunction): void {
@@ -51,6 +52,7 @@ function normalizeError(err: unknown): AppError | null {
 
 
 export function errorHandler(err: unknown, _req: Request, res: Response, next: NextFunction): void {
+    const requestId = getRequestContext()?.requestId;
     if (res.headersSent) {
         next(err);
         return;
@@ -66,6 +68,7 @@ export function errorHandler(err: unknown, _req: Request, res: Response, next: N
             succss: false,
             message: "internal server error",
             code: "INTERNAL_ERROR",
+            requestId,
             ...(config.isDevelopment && err instanceof Error ? { stack: err.stack } : {}),
         });
         return;
@@ -75,6 +78,7 @@ export function errorHandler(err: unknown, _req: Request, res: Response, next: N
         success: false,
         message: appError.message,
         code: appError.code,
+        requestId,
         ...(appError.details ? { details: appError.details } : {}),
         ...(config.isDevelopment ? { stack: appError.stack } : {}),
     });

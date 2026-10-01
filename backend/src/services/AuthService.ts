@@ -4,6 +4,7 @@ import type { IRefreshTokenRepository } from "../repositories/interfaces/IRefres
 import { TokenService } from "./TokenService";
 import { ForbiddenError, UnauthorizedError } from "../errors";
 import type { User } from "../types/user";
+import { AuditService } from "./AuditService";
 
 export interface AuthResult {
     user: User;
@@ -19,8 +20,29 @@ export class AuthService {
     constructor(
         private readonly users: IUserRepository,
         private readonly refreshTokens: IRefreshTokenRepository,
-        private readonly tokens: TokenService
+        private readonly tokens: TokenService,
+        private readonly audit: AuditService
     ) { }
+
+    // async login(email: string, password: string): Promise<AuthResult> {
+    //     const found = await this.users.findByEmailWithPassword(email);
+    //     const hash = found?.passwordHash ?? (await this.dummyHash);
+    //     const passwordOk = await argon2.verify(hash, password);
+
+    //     if (!found || !passwordOk) {
+    //         throw new UnauthorizedError("Invalid email or password", "INVALID_CREDENTIALS");
+    //     }
+    //     if (!found.isActive) {
+    //         throw new ForbiddenError("Account is deactivated", "ACCOUNT_DISABLED");
+    //     }
+
+    //     const { passwordHash: _passwordHash, ...user } = found;
+    //     // await this.users.updateLastLogin(user.id, new Date());
+    //     // return this.issueTokens(user);
+    //     const now = new Date();
+    //     await this.users.updateLastLogin(user.id, now);
+    //     return this.issueTokens({ ...user, lastLoginAt: now });
+    // }
 
     async login(email: string, password: string): Promise<AuthResult> {
         const found = await this.users.findByEmailWithPassword(email);
@@ -28,19 +50,41 @@ export class AuthService {
         const passwordOk = await argon2.verify(hash, password);
 
         if (!found || !passwordOk) {
+            await this.audit.record({
+                actor: null,
+                action: "LOGIN_FAILED",
+                entityType: "USER",
+                entityId: found?.id ?? null,
+                summary: "Failed sign-in attempt",
+                metadata: { email: email.slice(0, 120), reason: found ? "BAD_PASSWORD" : "UNKNOWN_EMAIL" },
+            });
             throw new UnauthorizedError("Invalid email or password", "INVALID_CREDENTIALS");
         }
         if (!found.isActive) {
+            await this.audit.record({
+                actor: null,
+                action: "LOGIN_FAILED",
+                entityType: "USER",
+                entityId: found.id,
+                summary: "Sign-in attempt on a deactivated account",
+                metadata: { reason: "ACCOUNT_DISABLED" },
+            });
             throw new ForbiddenError("Account is deactivated", "ACCOUNT_DISABLED");
         }
 
         const { passwordHash: _passwordHash, ...user } = found;
-        // await this.users.updateLastLogin(user.id, new Date());
-        // return this.issueTokens(user);
         const now = new Date();
         await this.users.updateLastLogin(user.id, now);
+        await this.audit.record({
+            actor: { id: user.id, role: user.role },
+            action: "LOGIN_SUCCESS",
+            entityType: "USER",
+            entityId: user.id,
+            summary: `${user.firstName} ${user.lastName} signed in`,
+        });
         return this.issueTokens({ ...user, lastLoginAt: now });
     }
+
 
     async refresh(rawRefreshToken: string): Promise<AuthResult> {
         const { sub } = this.tokens.verifyRefreshToken(rawRefreshToken);
@@ -54,6 +98,13 @@ export class AuthService {
         if (!revoked) {
             // A token that was already used is being presented again: assume theft
             await this.refreshTokens.revokeAllForUser(sub);
+            await this.audit.record({
+                actor: null,
+                action: "TOKEN_REUSE_DETECTED",
+                entityType: "USER",
+                entityId: sub,
+                summary: "Refresh token reuse detected; all sessions revoked",
+            });
             throw new UnauthorizedError(
                 "Refresh token reuse detected. Please log in again.",
                 "REFRESH_TOKEN_REUSED"
@@ -88,7 +139,7 @@ export class AuthService {
 
     async getProfile(userId: string): Promise<User> {
         const user = await this.users.findById(userId);
-        if(!user || !user.isActive) {
+        if (!user || !user.isActive) {
             throw new UnauthorizedError("Account unavailable", "ACCOUNT_UNAVAILABLE");
         }
         return user;

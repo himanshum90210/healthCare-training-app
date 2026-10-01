@@ -16,3 +16,18 @@ export const formatDateTime = (iso: string | null): string =>
   iso
     ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso))
     : "First sign-in";
+
+export const CLINIC_TZ: string = import.meta.env.VITE_CLINIC_TIMEZONE ?? "Asia/Kolkata";
+
+export const formatClinicDateTime = (iso: string): string => 
+  new Intl.DateTimeFormat("en-IN", {timeZone: CLINIC_TZ, dateStyle: "medium", timeStyle: "short"}).format(new Date(iso));
+
+export const clinicDateOf = (iso: string): string => 
+  new Intl.DateTimeFormat("en-CA", {timeZone: CLINIC_TZ, year: "numeric",  month: "2-digit", day: "2-digit"}).format(new Date(iso));
+
+export const todayInClinic = (): string => clinicDateOf(new Date().toISOString());
+
+export const formatClinicTimestamp = (iso: string): string =>
+  new Intl.DateTimeFormat("en-IN", { timeZone: CLINIC_TZ, dateStyle: "medium", timeStyle: "medium" }).format(
+    new Date(iso)
+  );

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 interface Props {
-  tone?: "neutral" | "info" | "success" | "warning" | "primary";
+  tone?: "neutral" | "info" | "success" | "warning" | "primary" | "danger";
   children: ReactNode;
 }
 
