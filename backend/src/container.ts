@@ -14,6 +14,10 @@ import { AppointmentController } from "./controllers/AppointmentController";
 import { MongoAuditRepository } from "./repositories/mongodb/MongoAuditRepository";
 import { AuditService } from "./services/AuditService";
 import { AuditController } from "./controllers/AuditController";
+import { SocketManager } from "./realtime/SocketManager";
+import { MongoNotificationRepository } from "./repositories/mongodb/MongoNotificationRepository";
+import { NotificationService } from "./services/NotificationService";
+import { NotificationController } from "./controllers/NotificationController";
 
 
 
@@ -27,6 +31,7 @@ const availabilityService = new AvailabilityService(appointmentRepository);
 
 
 
+
 export const tokenService = new TokenService(); 
 const authService = new AuthService(userRepository, refreshTokenRepository, tokenService, auditService);
 
@@ -37,12 +42,19 @@ export const authenticate = createAuthenticate(tokenService);
 const doctorRepository = new MongoDoctorRepository();
 const doctorService = new DoctorService(doctorRepository, availabilityService, auditService);
 export const doctorController = new DoctorController(doctorService);
+const notificationRepository = new MongoNotificationRepository();
+const notificationService = new NotificationService(
+  notificationRepository,
+  doctorRepository,
+  SocketManager.getInstance() // the Singleton, used through the IRealtimePublisher interface
+);
+export const notificationController = new NotificationController(notificationService);
 
-const appointmentService = new AppointmentService(appointmentRepository,doctorRepository,userRepository,availabilityService, auditService)
+const appointmentService = new AppointmentService(appointmentRepository,doctorRepository,userRepository,availabilityService, auditService,notificationService)
 
 
 export const appointmentController = new AppointmentController(appointmentService)
 
 new AuthService(userRepository, refreshTokenRepository, tokenService, auditService)
 new DoctorService(doctorRepository, availabilityService, auditService)
-new AppointmentService(appointmentRepository, doctorRepository, userRepository, availabilityService, auditService)
+new AppointmentService(appointmentRepository, doctorRepository, userRepository, availabilityService, auditService,notificationService)

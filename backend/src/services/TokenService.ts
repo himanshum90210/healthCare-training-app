@@ -7,6 +7,7 @@ import { ROLES, type Role } from "../types/role";
 export interface AccessTokenPayload {
   sub: string;
   role: Role;
+  exp: number,
 }
 
 export class TokenService {
@@ -38,7 +39,7 @@ export class TokenService {
     if (!(ROLES as readonly string[]).includes(decoded.role)) {
       throw new UnauthorizedError("Invalid token", "INVALID_TOKEN");
     }
-    return { sub: decoded.sub as string, role: decoded.role as Role };
+    return { sub: decoded.sub as string, role: decoded.role as Role, exp: decoded.exp as number };
   }
 
   verifyRefreshToken(token: string): { sub: string } {

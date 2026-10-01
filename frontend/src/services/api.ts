@@ -1,7 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import type { AuthPayload } from "../types/auth";
 
-const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
+export const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:5000";
 
 export const api = axios.create({ baseURL, withCredentials: true });
 

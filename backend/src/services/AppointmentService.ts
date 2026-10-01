@@ -14,6 +14,8 @@ import type { Paginated } from "../types/pagination";
 import { toClinicDate } from "../utils/clinicTime";
 import { AuditService } from "./AuditService";
 import { AuditAction, AuditData } from "../types/audit";
+import { NotificationService } from "./NotificationService";
+import { AppointmentEvent } from "../types/notification";
 
 export interface BookAppointmentInput {
   doctorId: string;
@@ -32,6 +34,7 @@ export class AppointmentService {
     private readonly users: IUserRepository,
     private readonly availability: AvailabilityService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationService,
     private readonly now: () => Date = () => new Date(),
   ) { }
 
@@ -54,7 +57,7 @@ export class AppointmentService {
       reason: input.reason ?? "",
       bookedById: actor.id,
     });
-    await this.log(actor, "APPOINTMENT_BOOKED", "Booked", created);
+    await this.afterChange(actor, "APPOINTMENT_BOOKED", "Booked", "created", created);
     return created;
 
   }
@@ -84,7 +87,7 @@ export class AppointmentService {
 
     const updated = await this.appointments.reschedule(id, { startTime: slot.startsAt, endTime: slot.endsAt });
     if (!updated) throw INVALID_STATE("Appointment can no longer be rescheduled");
-    await this.log(actor, "APPOINTMENT_RESCHEDULED", "Rescheduled", updated, this.snapshot(appointment));
+    await this.afterChange(actor, "APPOINTMENT_RESCHEDULED", "Rescheduled","rescheduled", updated, this.snapshot(appointment));
     return updated;
   }
 
@@ -102,7 +105,7 @@ export class AppointmentService {
     // if (!cancelled) throw INVALID_STATE("Appointment can no longer be cancelled");
     // return cancelled;
     if (!cancelled) throw INVALID_STATE("Appointment can no longer be cancelled");
-    await this.log(actor, "APPOINTMENT_CANCELLED", "Cancelled", cancelled, this.snapshot(appointment));
+    await this.afterChange(actor, "APPOINTMENT_CANCELLED", "Cancelled", "cancelled", cancelled, this.snapshot(appointment));
     return cancelled;
 
   }
@@ -111,16 +114,16 @@ export class AppointmentService {
     const before = await this.getAccessible(actor, id);
     const confirmed = await this.appointments.transition(id, ["SCHEDULED"], "CONFIRMED");
     if (!confirmed) throw INVALID_STATE("Only a scheduled appointment can be confirmed");
-    await this.log(actor, "APPOINTMENT_CONFIRMED", "Confirmed", confirmed, this.snapshot(before));
+    await this.afterChange(actor, "APPOINTMENT_CONFIRMED", "Confirmed", "confirmed", confirmed, this.snapshot(before));
 
     return confirmed;
   }
 
   async complete(actor: Actor, id: string): Promise<Appointment> {
-   const before =  await this.getAccessible(actor, id);
+    const before = await this.getAccessible(actor, id);
     const completed = await this.appointments.transition(id, ["CONFIRMED"], "COMPLETED");
     if (!completed) throw INVALID_STATE("Only a confirmed appointment can be completed");
-    await this.log(actor, "APPOINTMENT_COMPLETED", "Completed", completed, this.snapshot(before));
+    await this.afterChange(actor, "APPOINTMENT_COMPLETED", "Completed", "completed", completed, this.snapshot(before));
     return completed;
   }
 
@@ -178,6 +181,18 @@ export class AppointmentService {
       after: this.snapshot(a),
       metadata: { doctorId: a.doctorId, patientId: a.patientId },
     });
+  }
+
+  private async afterChange(
+    actor: Actor,
+    action: AuditAction,
+    verb: string,
+    event: AppointmentEvent,
+    a: Appointment,
+    before?: AuditData
+  ): Promise<void> {
+    await this.log(actor, action, verb, a, before);
+    await this.notifications.appointmentEvent(event, a, actor);
   }
 
 

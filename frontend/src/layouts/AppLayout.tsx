@@ -10,6 +10,8 @@ import { NAV_ITEMS } from "../config/navigation";
 import { useTheme } from "../hooks/useTheme";
 import { initials, roleLabel } from "../utils/format";
 import {Toaster} from "sonner";
+import { NotificationBell } from "../features/notifications/NotificationBell";
+import { RealtimeProvider } from "../features/notifications/RealtimeProvider";
 
 gsap.registerPlugin(useGSAP);
 
@@ -41,6 +43,7 @@ export default function AppLayout() {
   return (
     <>
      <Toaster theme={theme} position="top-right" richColors closeButton />
+      <RealtimeProvider />
     <div className="shell">
       <aside className={`sidebar${navOpen ? " is-open" : ""}`} aria-label="Primary">
         <div className="sidebar__brand">
@@ -81,6 +84,7 @@ export default function AppLayout() {
             onClick={() => setNavOpen(true)}
           />
           <div className="topbar__spacer" />
+          <NotificationBell />
           <Button
             variant="ghost"
             className="btn--icon"

@@ -16,3 +16,8 @@ export function clinicDayRangeUtc(date: string, zone: string): { from: Date; to:
 export function toClinicDate(instant: Date, zone: string): string {
   return DateTime.fromJSDate(instant, { zone }).toISODate() ?? "";
 }
+
+/** "12 Oct 2026, 9:00 am" in the clinic's time zone */
+export function formatClinicDateTime(instant: Date, zone: string): string {
+  return DateTime.fromJSDate(instant, { zone }).toFormat("d LLL yyyy, h:mm a");
+}
